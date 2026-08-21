@@ -20,7 +20,10 @@ async def upload_payments(file: UploadFile = File(...)):
 
     await db.payment_records.insert_many(records)
 
+    total_amount = sum(record["amount"] for record in records)
+
     return {
         "success": True,
         "imported": len(records),
+        "total_amount": total_amount,
     }

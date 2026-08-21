@@ -1,6 +1,7 @@
 import pandas as pd
 from fastapi import UploadFile
 from io import StringIO
+from app.models.payment import PaymentRecord
 
 REQUIRED_COLUMNS = [
     "customer_name",
@@ -24,4 +25,12 @@ async def parse_payment_csv(file: UploadFile):
     if missing:
         raise ValueError(f"Missing columns: {missing}")
 
-    return df.to_dict(orient="records")
+    from app.models.payment import PaymentRecord
+
+    records = []
+
+    for row in df.to_dict(orient="records"):
+        payment = PaymentRecord(**row)
+        records.append(payment.model_dump(mode="json"))
+
+    return records

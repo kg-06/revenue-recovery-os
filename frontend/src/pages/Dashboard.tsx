@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { CircleCheck, CircleX } from "lucide-react";
 import { getBackendHealth } from "../services/health";
 import CSVUploader from "../components/CSVUploader";
+import { getDashboardSummary } from "../services/dashboard";
 
 export default function Dashboard() {
   const [health, setHealth] = useState<any>(null);
@@ -12,11 +13,40 @@ export default function Dashboard() {
       .catch(() => setHealth({ status: "offline" }));
   }, []);
 
+  const [summary, setSummary] = useState({
+    revenue_at_risk: 0,
+    recovered_today: 0,
+    total_cases: 0,
+    recovery_rate: 0,
+  });
+
+  useEffect(() => {
+    getBackendHealth()
+      .then(setHealth)
+      .catch(() => setHealth({ status: "offline" }));
+
+    getDashboardSummary()
+      .then(setSummary)
+      .catch(() => {});
+  }, []);
+
   const cards = [
-    { title: "Revenue at Risk", value: "₹0" },
-    { title: "Recovered Today", value: "₹0" },
-    { title: "Active Cases", value: "0" },
-    { title: "Recovery Rate", value: "0%" },
+    {
+      title: "Revenue at Risk",
+      value: `₹${summary.revenue_at_risk.toLocaleString()}`,
+    },
+    {
+      title: "Recovered Today",
+      value: `₹${summary.recovered_today.toLocaleString()}`,
+    },
+    {
+      title: "Active Cases",
+      value: summary.total_cases.toString(),
+    },
+    {
+      title: "Recovery Rate",
+      value: `${summary.recovery_rate}%`,
+    },
   ];
 
   return (
