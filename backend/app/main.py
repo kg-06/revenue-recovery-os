@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.services.database import db
+from app.api.ai import router as ai_router
 
 app = FastAPI(
     title="Revenue Recovery OS API",
@@ -8,22 +10,27 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173"
-    ],
+    allow_origins=["http://localhost:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.include_router(ai_router)
 
 @app.get("/")
 async def root():
-    return {
-        "message": "Revenue Recovery OS API is running."
-    }
+    return {"message": "Revenue Recovery OS API is running."}
 
 @app.get("/health")
 async def health():
-    return {
-        "status": "healthy"
-    }
+    try:
+        await db.command("ping")
+        return {
+            "status": "healthy",
+            "database": "connected"
+        }
+    except Exception as e:
+        return {
+            "status": "unhealthy",
+            "database": str(e)
+        }
