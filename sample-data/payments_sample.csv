@@ -1,0 +1,6 @@
+customer_name,email,amount,payment_type,status,failure_reason,due_date,attempts
+Rahul Sharma,rahul@example.com,2999,subscription,failed,card_expired,2026-08-21,2
+Anita Verma,anita@example.com,1499,invoice,overdue,invoice_overdue,2026-08-18,0
+Rohit Gupta,rohit@example.com,799,checkout,abandoned,checkout_exit,2026-08-20,0
+Sneha Kapoor,sneha@example.com,4999,subscription,failed,bank_timeout,2026-08-21,1
+Arjun Mehta,arjun@example.com,1299,invoice,overdue,payment_pending,2026-08-17,3

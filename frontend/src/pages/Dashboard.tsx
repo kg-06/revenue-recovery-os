@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { CircleCheck, CircleX } from "lucide-react";
 import { getBackendHealth } from "../services/health";
+import CSVUploader from "../components/CSVUploader";
 
 export default function Dashboard() {
   const [health, setHealth] = useState<any>(null);
@@ -68,10 +69,7 @@ export default function Dashboard() {
         </div>
 
         <div className="rounded-2xl border-2 border-dashed border-slate-300 bg-white p-10 text-center">
-          <h3 className="text-lg font-semibold">CSV Upload</h3>
-          <p className="mt-2 text-slate-500">
-            This becomes our payment import feature in the next phase.
-          </p>
+          <CSVUploader />
         </div>
       </div>
     </div>

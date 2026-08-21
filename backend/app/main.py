@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.services.database import db
 from app.api.ai import router as ai_router
+from app.api.upload import router as upload_router
 
 app = FastAPI(
     title="Revenue Recovery OS API",
@@ -16,6 +17,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.include_router(ai_router)
+app.include_router(upload_router)
 
 @app.get("/")
 async def root():
