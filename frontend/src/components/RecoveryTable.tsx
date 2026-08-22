@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
+import { Badge } from "@/components/ui/badge";
+
 import { getWorkflow } from "../services/workflow";
-import WorkflowModal from "./WorkflowModal";
 import { getRecoveryCases } from "../services/recovery";
+import WorkflowModal from "./WorkflowModal";
 
 export default function RecoveryTable() {
   const [cases, setCases] = useState<any[]>([]);
@@ -29,56 +31,100 @@ export default function RecoveryTable() {
   }
 
   return (
-    <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-      <h2 className="mb-5 text-xl font-semibold">Recovery Queue</h2>
-
-      <div className="overflow-auto">
-        <table className="min-w-full">
-          <thead>
-            <tr className="text-left text-slate-500">
-              <th className="pb-3">Customer</th>
-              <th>Amount</th>
-              <th>Priority</th>
-              <th>Risk</th>
-              <th>AI Diagnosis</th>
-              <th>Workflow</th>
+    <>
+      <div className="overflow-x-auto">
+        <table className="w-full table-fixed">
+          <thead className="border-b border-slate-200">
+            <tr className="text-left text-sm font-semibold text-slate-500">
+              <th className="w-[24%] px-6 py-4">Customer</th>
+              <th className="w-[10%] px-3 py-4">Amount</th>
+              <th className="w-[11%] px-3 py-4">Priority</th>
+              <th className="w-[7%] px-3 py-4">Risk</th>
+              <th className="w-[33%] px-3 py-4">AI Diagnosis</th>
+              <th className="w-[15%] px-6 py-4 text-right">Workflow</th>
             </tr>
           </thead>
 
           <tbody>
-            {cases.map((c, i) => (
-              <tr key={c._id} className="border-t align-top">
-                <td className="py-3">{c.customer_name}</td>
+            {cases.map((c) => (
+              <tr
+                key={c._id}
+                className="border-b border-slate-100 transition hover:bg-slate-50"
+              >
+                {/* Customer */}
+                <td className="px-6 py-5">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 font-semibold text-indigo-700">
+                      {c.customer_name.charAt(0)}
+                    </div>
 
-                <td>₹{c.amount}</td>
+                    <div className="min-w-0">
+                      <p className="truncate font-medium text-slate-900">
+                        {c.customer_name}
+                      </p>
 
-                <td>{c.priority}</td>
+                      <p className="truncate text-xs text-slate-500">
+                        {c.email}
+                      </p>
+                    </div>
+                  </div>
+                </td>
 
-                <td>{c.risk_score}</td>
+                {/* Amount */}
+                <td className="px-3 py-5 font-medium text-slate-900">
+                  ₹{Number(c.amount).toLocaleString()}
+                </td>
 
-                <td className="max-w-sm py-3 text-sm text-slate-600">
+                {/* Priority */}
+                <td className="px-3 py-5">
+                  <Badge
+                    className={
+                      c.priority === "High"
+                        ? "bg-rose-100 text-rose-700 hover:bg-rose-100"
+                        : c.priority === "Medium"
+                        ? "bg-amber-100 text-amber-700 hover:bg-amber-100"
+                        : "bg-slate-100 text-slate-700 hover:bg-slate-100"
+                    }
+                  >
+                    {c.priority}
+                  </Badge>
+                </td>
+
+                {/* Risk */}
+                <td className="px-3 py-5 font-medium text-slate-700">
+                  {c.risk_score}
+                </td>
+
+                {/* Diagnosis */}
+                <td className="px-3 py-5">
                   {c.root_cause ? (
-                    <div>
-                      <p className="font-medium">{c.root_cause}</p>
+                    <div className="space-y-1">
+                      <p className="font-medium text-slate-900">
+                        {c.root_cause}
+                      </p>
 
-                      <p className="mt-1 text-slate-500">
+                      <p className="line-clamp-2 text-sm text-slate-500">
                         {c.recommended_strategy}
                       </p>
 
-                      <p className="mt-1 text-xs">
+                      <p className="text-xs text-slate-400">
                         Confidence: {Math.round(c.confidence * 100)}%
                       </p>
                     </div>
                   ) : (
-                    <span className="italic text-slate-400">Not generated</span>
+                    <span className="italic text-slate-400">
+                      Not generated
+                    </span>
                   )}
                 </td>
-                <td className="py-3">
+
+                {/* Action */}
+                <td className="px-6 py-5 text-right">
                   <button
                     onClick={() => openWorkflow(c)}
-                    className="rounded-lg bg-slate-900 px-3 py-1 text-sm text-white hover:bg-slate-800"
+                    className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:-translate-y-0.5 hover:bg-slate-800 active:translate-y-0"
                   >
-                    View
+                    View →
                   </button>
                 </td>
               </tr>
@@ -86,12 +132,13 @@ export default function RecoveryTable() {
           </tbody>
         </table>
       </div>
+
       <WorkflowModal
         open={open}
         onClose={() => setOpen(false)}
         payment={selectedPayment}
         workflow={workflow}
       />
-    </div>
+    </>
   );
 }

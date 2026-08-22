@@ -8,6 +8,7 @@ export default function GenerateDiagnosisButton() {
 
   async function run() {
     setLoading(true);
+    setMessage("");
 
     try {
       const result = await generateDiagnoses();
@@ -23,18 +24,33 @@ export default function GenerateDiagnosisButton() {
   }
 
   return (
-    <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+    <div className="flex h-full flex-col items-center justify-center text-center">
+      <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-100">
+        <Sparkles className="h-7 w-7 text-indigo-600" />
+      </div>
+
+      <h3 className="text-lg font-semibold text-slate-900">
+        Generate AI Diagnoses
+      </h3>
+
+      <p className="mt-2 max-w-sm text-sm text-slate-500">
+        Analyze imported recovery cases and generate root causes, customer
+        behavior, confidence scores, and recommended recovery actions.
+      </p>
+
       <button
         onClick={run}
         disabled={loading}
-        className="flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 font-medium text-white transition hover:bg-indigo-700 disabled:opacity-60"
+        className="mt-6 flex items-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 font-medium text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
       >
         <Sparkles size={18} />
         {loading ? "Generating..." : "Generate AI Diagnoses"}
       </button>
 
       {message && (
-        <p className="mt-4 text-slate-600">{message}</p>
+        <p className="mt-4 max-w-sm rounded-lg bg-slate-50 px-4 py-3 text-sm text-slate-600">
+          {message}
+        </p>
       )}
     </div>
   );

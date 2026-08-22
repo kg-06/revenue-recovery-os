@@ -1,4 +1,6 @@
-from fastapi import APIRouter, HTTPException
+from datetime import datetime
+
+from fastapi import APIRouter
 from google.genai.errors import ClientError
 
 from app.services.database import db
@@ -16,21 +18,7 @@ async def generate_batch():
     if not pending:
         return {"processed": 0}
 
-    diagnosis_input = []
-
-    for record in pending:
-        diagnosis_input.append({
-            "customer_name": record["customer_name"],
-            "amount": record["amount"],
-            "payment_type": record["payment_type"],
-            "status": record["status"],
-            "failure_reason": record["failure_reason"],
-            "attempts": record["attempts"],
-            "risk_score": record["risk_score"],
-        })
-
     processed = 0
-
     batch_size = 10
 
     for i in range(0, len(pending), batch_size):
@@ -49,14 +37,47 @@ async def generate_batch():
                 "risk_score": record["risk_score"],
             })
 
-        diagnoses = await generate_batch_diagnosis(diagnosis_input)
+        try:
+            diagnoses = await generate_batch_diagnosis(diagnosis_input)
+
+        except ClientError as e:
+            status_code = getattr(e, "code", None) or getattr(e, "status", None)
+
+            if status_code == 429:
+                raise HTTPException(
+                    status_code=429,
+                    detail="Gemini rate limit reached. Please try again in a minute.",
+                )
+
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to generate AI diagnoses.",
+            )
 
         for record, diagnosis in zip(batch_records, diagnoses):
+            # Save AI diagnosis to the payment record
             await db.payment_records.update_one(
                 {"_id": record["_id"]},
                 {"$set": diagnosis},
             )
 
-        processed += 1
+            # Advance workflow to Diagnosis Generated
+            await db.recovery_workflows.update_one(
+                {"payment_record_id": record["record_id"]},
+                {
+                    "$set": {
+                        "current_state": "diagnosis_generated"
+                    },
+                    "$push": {
+                        "timeline": {
+                            "state": "diagnosis_generated",
+                            "timestamp": datetime.utcnow(),
+                            "details": "AI generated root cause and recovery strategy.",
+                        }
+                    },
+                },
+            )
+
+        processed += len(batch_records)
 
     return {"processed": processed}
