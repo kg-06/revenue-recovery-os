@@ -2,6 +2,7 @@ from fastapi import APIRouter, UploadFile, File, HTTPException
 from app.services.csv_parser import parse_payment_csv
 from app.services.database import db
 from app.agents.detection_agent import calculate_risk
+from app.services.workflow import create_initial_workflow
 
 router = APIRouter(prefix="/upload", tags=["Upload"])
 
@@ -38,6 +39,21 @@ async def upload_payments(file: UploadFile = File(...)):
         )
 
     result = await db.payment_records.bulk_write(operations)
+    
+    workflow_docs = []
+
+    for record in records:
+        existing = await db.recovery_workflows.find_one(
+            {"payment_record_id": record["record_id"]}
+        )
+
+        if not existing:
+            workflow_docs.append(
+                create_initial_workflow(record["record_id"])
+            )
+
+    if workflow_docs:
+        await db.recovery_workflows.insert_many(workflow_docs)
     
     
 

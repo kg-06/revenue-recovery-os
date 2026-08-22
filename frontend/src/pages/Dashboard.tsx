@@ -4,6 +4,7 @@ import { getBackendHealth } from "../services/health";
 import CSVUploader from "../components/CSVUploader";
 import { getDashboardSummary } from "../services/dashboard";
 import RecoveryTable from "../components/RecoveryTable";
+import GenerateDiagnosisButton from "../components/GenerateDiagnosisButton";
 
 export default function Dashboard() {
   const [health, setHealth] = useState<any>(null);
@@ -101,6 +102,7 @@ export default function Dashboard() {
 
         <div className="rounded-2xl border-2 border-dashed border-slate-300 bg-white p-10 text-center">
           <CSVUploader />
+          <GenerateDiagnosisButton />
           <RecoveryTable />
         </div>
       </div>

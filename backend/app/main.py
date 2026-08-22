@@ -5,6 +5,8 @@ from app.api.ai import router as ai_router
 from app.api.upload import router as upload_router
 from app.api.dashboard import router as dashboard_router
 from app.api.recovery import router as recovery_router
+from app.api.diagnosis import router as diagnosis_router
+from app.api.workflow import router as workflow_router
 
 app = FastAPI(
     title="Revenue Recovery OS API",
@@ -22,6 +24,8 @@ app.include_router(ai_router)
 app.include_router(upload_router)
 app.include_router(dashboard_router)
 app.include_router(recovery_router)
+app.include_router(diagnosis_router)
+app.include_router(workflow_router)
 
 @app.get("/")
 async def root():
