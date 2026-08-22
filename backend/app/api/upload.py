@@ -1,6 +1,7 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from app.services.csv_parser import parse_payment_csv
 from app.services.database import db
+from app.agents.detection_agent import calculate_risk
 
 router = APIRouter(prefix="/upload", tags=["Upload"])
 
@@ -18,12 +19,34 @@ async def upload_payments(file: UploadFile = File(...)):
     if not records:
         raise HTTPException(status_code=400, detail="CSV contains no valid records.")
 
-    await db.payment_records.insert_many(records)
+    for record in records:
+        score, priority = calculate_risk(record)
+        record["risk_score"] = score
+        record["priority"] = priority
+
+    from pymongo import UpdateOne
+
+    operations = []
+
+    for record in records:
+        operations.append(
+            UpdateOne(
+                {"record_id": record["record_id"]},
+                {"$set": record},
+                upsert=True,
+            )
+        )
+
+    result = await db.payment_records.bulk_write(operations)
+    
+    
 
     total_amount = sum(record["amount"] for record in records)
 
     return {
         "success": True,
-        "imported": len(records),
+        "processed": len(records),
+        "inserted": result.upserted_count,
+        "updated": result.modified_count,
         "total_amount": total_amount,
     }

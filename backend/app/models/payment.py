@@ -16,3 +16,4 @@ class PaymentRecord(BaseModel):
 
     risk_score: float = 0.0
     workflow_state: str = "at_risk"
+    record_id: str = ""

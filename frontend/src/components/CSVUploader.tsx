@@ -10,7 +10,7 @@ export default function CSVUploader() {
       const result = await uploadCSV(file);
 
       setMessage(
-        `Imported ${result.imported} records worth ₹${result.total_amount.toLocaleString()}.`
+        `Processed ${result.processed} records • Added ${result.inserted} • Updated ${result.updated} • ₹${result.total_amount.toLocaleString()}`,
       );
     } catch (err: any) {
       setMessage(err.response?.data?.detail || "Upload failed.");
