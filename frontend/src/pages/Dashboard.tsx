@@ -35,12 +35,15 @@ export default function Dashboard() {
     refreshDashboard();
   }, []);
 
+  // Refresh dashboard whenever data changes anywhere in the app
   useEffect(() => {
     const handler = () => refreshDashboard();
 
+    window.addEventListener("data-updated", handler);
     window.addEventListener("recovery-updated", handler);
 
     return () => {
+      window.removeEventListener("data-updated", handler);
       window.removeEventListener("recovery-updated", handler);
     };
   }, []);

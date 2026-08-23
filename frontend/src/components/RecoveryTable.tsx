@@ -15,12 +15,24 @@ export default function RecoveryTable() {
   async function loadCases() {
     try {
       const data = await getRecoveryCases();
-      setCases(data);
+
+      // Only show active recovery cases
+      setCases(data.filter((c: any) => c.current_state !== "closed"));
     } catch {}
   }
 
   useEffect(() => {
     loadCases();
+
+    const refresh = () => loadCases();
+
+    window.addEventListener("data-updated", refresh);
+    window.addEventListener("recovery-updated", refresh);
+
+    return () => {
+      window.removeEventListener("data-updated", refresh);
+      window.removeEventListener("recovery-updated", refresh);
+    };
   }, []);
 
   async function openWorkflow(payment: any) {
@@ -36,22 +48,25 @@ export default function RecoveryTable() {
     setOpen(true);
   }
 
- function handleRecoveryComplete(recordId: string) {
-  setCases((prev) => prev.filter((c) => c.record_id !== recordId));
-  setOpen(false);
+  function handleRecoveryComplete(recordId: string) {
+    setCases((prev) => prev.filter((c) => c.record_id !== recordId));
+    setOpen(false);
 
-  // Notify the dashboard to refresh KPIs
-  window.dispatchEvent(new Event("recovery-updated"));
-}
+    // Refresh Dashboard + Recovery Queue everywhere
+    window.dispatchEvent(new Event("recovery-updated"));
+    window.dispatchEvent(new Event("data-updated"));
+  }
 
   return (
     <>
       {cases.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-10 text-center">
           <CheckCircle2 className="mx-auto h-12 w-12 text-green-500" />
+
           <h3 className="mt-4 text-lg font-semibold text-slate-900">
             Recovery Queue Empty
           </h3>
+
           <p className="mt-2 text-slate-500">
             All current revenue recovery cases have been completed.
           </p>
@@ -76,6 +91,7 @@ export default function RecoveryTable() {
                   key={c._id}
                   className="border-b border-slate-100 transition hover:bg-slate-50"
                 >
+                  {/* Customer */}
                   <td className="px-6 py-5">
                     <div className="flex items-center gap-3">
                       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 font-semibold text-indigo-700">
@@ -94,28 +110,32 @@ export default function RecoveryTable() {
                     </div>
                   </td>
 
+                  {/* Amount */}
                   <td className="px-3 py-5 font-medium text-slate-900">
                     ₹{Number(c.amount).toLocaleString()}
                   </td>
 
+                  {/* Priority */}
                   <td className="px-3 py-5">
                     <Badge
                       className={
                         c.priority === "High"
                           ? "bg-rose-100 text-rose-700 hover:bg-rose-100"
                           : c.priority === "Medium"
-                          ? "bg-amber-100 text-amber-700 hover:bg-amber-100"
-                          : "bg-slate-100 text-slate-700 hover:bg-slate-100"
+                            ? "bg-amber-100 text-amber-700 hover:bg-amber-100"
+                            : "bg-slate-100 text-slate-700 hover:bg-slate-100"
                       }
                     >
                       {c.priority}
                     </Badge>
                   </td>
 
+                  {/* Risk */}
                   <td className="px-3 py-5 font-medium text-slate-700">
                     {c.risk_score}
                   </td>
 
+                  {/* Diagnosis */}
                   <td className="px-3 py-5">
                     {c.root_cause ? (
                       <div className="space-y-1">
@@ -138,6 +158,7 @@ export default function RecoveryTable() {
                     )}
                   </td>
 
+                  {/* Workflow */}
                   <td className="px-6 py-5 text-right">
                     <button
                       onClick={() => openWorkflow(c)}

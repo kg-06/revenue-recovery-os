@@ -16,6 +16,9 @@ export default function GenerateDiagnosisButton() {
       setMessage(
         `Generated AI diagnoses for ${result.processed} recovery cases.`,
       );
+
+      // Refresh Dashboard + Recovery Queue immediately
+      window.dispatchEvent(new Event("data-updated"));
     } catch (err: any) {
       setMessage(err.response?.data?.detail || "Diagnosis failed.");
     }
