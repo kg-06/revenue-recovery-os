@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from pymongo import UpdateOne
 
@@ -7,11 +5,6 @@ from app.services.csv_parser import parse_payment_csv
 from app.services.database import db
 from app.agents.detection_agent import calculate_risk
 from app.services.workflow import create_initial_workflow
-
-from datetime import datetime
-from zoneinfo import ZoneInfo
-
-IST = ZoneInfo("Asia/Kolkata")
 
 router = APIRouter(prefix="/upload", tags=["Upload"])
 
@@ -29,51 +22,60 @@ async def upload_payments(file: UploadFile = File(...)):
     if not records:
         raise HTTPException(status_code=400, detail="CSV contains no valid records.")
 
-    # Calculate risk score and priority
+    operations = []
+    workflow_docs = []
+
     for record in records:
         score, priority = calculate_risk(record)
         record["risk_score"] = score
         record["priority"] = priority
 
-    # Upsert payment records
-    operations = [
-        UpdateOne(
-            {"record_id": record["record_id"]},
-            {"$set": record},
-            upsert=True,
+        existing_payment = await db.payment_records.find_one(
+            {"record_id": record["record_id"]}
         )
-        for record in records
-    ]
 
-    result = await db.payment_records.bulk_write(operations)
+        existing_workflow = await db.recovery_workflows.find_one(
+            {"payment_record_id": record["record_id"]}
+        )
 
-    # Fetch existing workflows in one query (instead of N find_one calls)
-    record_ids = [record["record_id"] for record in records]
+        # -----------------------------------------
+        # Preserve workflow state (source of truth)
+        # -----------------------------------------
+        if existing_workflow:
+            state = existing_workflow.get("current_state")
 
-    existing_workflows = await db.recovery_workflows.find(
-        {"payment_record_id": {"$in": record_ids}}
-    ).to_list(length=None)
+            if state == "closed":
+                record["status"] = "paid"
 
-    existing_ids = {wf["payment_record_id"] for wf in existing_workflows}
+                # Preserve recovery metadata
+                if existing_payment:
+                    record["recovered_at"] = existing_payment.get("recovered_at")
+                    record["razorpay_payment_id"] = existing_payment.get(
+                        "razorpay_payment_id"
+                    )
 
-    workflow_docs = []
+            elif state == "payment_received":
+                record["status"] = "paid"
 
-    for record in records:
-        if record["record_id"] not in existing_ids:
-            workflow = create_initial_workflow(record["record_id"])
+            elif state in ["email_sent", "diagnosis_generated"]:
+                # Don't regress these customers back to "failed"
+                if existing_payment and existing_payment.get("status"):
+                    record["status"] = existing_payment["status"]
 
-            # Immediately advance to Risk Scored.
-            workflow["current_state"] = "risk_scored"
+        operations.append(
+            UpdateOne(
+                {"record_id": record["record_id"]},
+                {"$set": record},
+                upsert=True,
+            )
+        )
 
-            workflow["timeline"].append(
-                {
-                    "state": "risk_scored",
-                    "timestamp": datetime.now(IST),
-                    "details": f"Detection Agent assigned a risk score of {record['risk_score']} and priority {record['priority']}.",
-                }
+        if not existing_workflow:
+            workflow_docs.append(
+                create_initial_workflow(record["record_id"])
             )
 
-            workflow_docs.append(workflow)
+    result = await db.payment_records.bulk_write(operations)
 
     if workflow_docs:
         await db.recovery_workflows.insert_many(workflow_docs)

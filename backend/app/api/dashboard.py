@@ -35,7 +35,6 @@ async def summary():
             recovered_at = record.get("recovered_at")
 
             if recovered_at:
-                # Handle old naive timestamps and new timezone-aware ones.
                 if recovered_at.tzinfo is None:
                     recovered_at = recovered_at.replace(tzinfo=IST)
                 else:
@@ -51,8 +50,21 @@ async def summary():
     )
 
     return {
-        "total_cases": len(active_records),  # Active cases shown on dashboard
+        "total_cases": len(active_records),
         "revenue_at_risk": revenue_at_risk,
         "recovered_today": recovered_today,
         "recovery_rate": recovery_rate,
+    }
+
+
+@router.post("/reset-demo")
+async def reset_demo():
+    payment_result = await db.payment_records.delete_many({})
+    workflow_result = await db.recovery_workflows.delete_many({})
+
+    return {
+        "success": True,
+        "message": "Demo data cleared.",
+        "payment_records_deleted": payment_result.deleted_count,
+        "workflows_deleted": workflow_result.deleted_count,
     }

@@ -1,5 +1,11 @@
 import { useEffect, useState } from "react";
-import { AlertTriangle, Wallet, Users, TrendingUp } from "lucide-react";
+import {
+  AlertTriangle,
+  Wallet,
+  Users,
+  TrendingUp,
+  RotateCcw,
+} from "lucide-react";
 
 import AppShell from "../layout/AppShell";
 import CSVUploader from "../components/CSVUploader";
@@ -7,12 +13,16 @@ import GenerateDiagnosisButton from "../components/GenerateDiagnosisButton";
 import RecoveryTable from "../components/RecoveryTable";
 
 import { getBackendHealth } from "../services/health";
-import { getDashboardSummary } from "../services/dashboard";
+import {
+  getDashboardSummary,
+  resetDemoData,
+} from "../services/dashboard";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function Dashboard() {
   const [health, setHealth] = useState<any>(null);
+  const [resetting, setResetting] = useState(false);
 
   const [summary, setSummary] = useState({
     revenue_at_risk: 0,
@@ -35,7 +45,6 @@ export default function Dashboard() {
     refreshDashboard();
   }, []);
 
-  // Refresh dashboard whenever data changes anywhere in the app
   useEffect(() => {
     const handler = () => refreshDashboard();
 
@@ -47,6 +56,29 @@ export default function Dashboard() {
       window.removeEventListener("recovery-updated", handler);
     };
   }, []);
+
+  async function handleResetDemo() {
+    const confirmed = window.confirm(
+      "Reset all demo data?\n\nThis will delete all imported payments and recovery workflows."
+    );
+
+    if (!confirmed) return;
+
+    setResetting(true);
+
+    try {
+      await resetDemoData();
+
+      window.dispatchEvent(new Event("data-updated"));
+      window.dispatchEvent(new Event("recovery-updated"));
+
+      await refreshDashboard();
+    } catch {
+      alert("Failed to reset demo data.");
+    }
+
+    setResetting(false);
+  }
 
   const cards = [
     {
@@ -152,9 +184,9 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        {/* System Health */}
+        {/* System Health + Demo Reset */}
         <Card className="border-slate-200 shadow-sm">
-          <CardContent className="flex items-center justify-between p-6">
+          <CardContent className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h3 className="font-semibold text-slate-900">System Health</h3>
 
@@ -163,24 +195,35 @@ export default function Dashboard() {
               </p>
             </div>
 
-            <div
-              className={`flex items-center gap-2 rounded-full px-4 py-2 ${
-                health?.status === "healthy"
-                  ? "bg-emerald-50 text-emerald-700"
-                  : "bg-rose-50 text-rose-700"
-              }`}
-            >
+            <div className="flex items-center gap-3">
               <div
-                className={`h-2 w-2 rounded-full ${
+                className={`flex items-center gap-2 rounded-full px-4 py-2 ${
                   health?.status === "healthy"
-                    ? "bg-emerald-500"
-                    : "bg-rose-500"
+                    ? "bg-emerald-50 text-emerald-700"
+                    : "bg-rose-50 text-rose-700"
                 }`}
-              />
+              >
+                <div
+                  className={`h-2 w-2 rounded-full ${
+                    health?.status === "healthy"
+                      ? "bg-emerald-500"
+                      : "bg-rose-500"
+                  }`}
+                />
 
-              <span className="text-sm font-medium">
-                {health?.status === "healthy" ? "Healthy" : "Offline"}
-              </span>
+                <span className="text-sm font-medium">
+                  {health?.status === "healthy" ? "Healthy" : "Offline"}
+                </span>
+              </div>
+
+              <button
+                onClick={handleResetDemo}
+                disabled={resetting}
+                className="flex items-center gap-2 rounded-lg border border-rose-200 px-3 py-2 text-sm font-medium text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <RotateCcw size={16} />
+                {resetting ? "Resetting..." : "Reset Demo"}
+              </button>
             </div>
           </CardContent>
         </Card>

@@ -1,8 +1,4 @@
-import {
-  CheckCircle2,
-  Circle,
-  CircleDot,
-} from "lucide-react";
+import { CheckCircle2, Circle, CircleDot } from "lucide-react";
 
 export default function WorkflowTimeline({
   events,
@@ -16,8 +12,8 @@ export default function WorkflowTimeline({
       description: "Payment identified as revenue at risk.",
     },
     {
-      id: "risk_scored",
-      title: "Risk Scored",
+      id: "risk_assessed",
+      title: "Risk Assessed",
       description: "Detection Agent calculated the recovery priority.",
     },
     {
@@ -48,19 +44,26 @@ export default function WorkflowTimeline({
   ];
 
   const currentState =
-    events.length > 0
-      ? events[events.length - 1].state
-      : "at_risk";
+    events.length > 0 ? events[events.length - 1].state : "at_risk";
 
   const currentIndex = Math.max(
     0,
     steps.findIndex((step) => step.id === currentState)
   );
 
-  // Build a lookup so every step gets its own timestamp.
-  const eventMap = new Map(
-    events.map((event) => [event.state, event])
-  );
+  const eventMap = new Map(events.map((event) => [event.state, event]));
+
+  function formatIST(timestamp: string) {
+    return new Date(timestamp).toLocaleString("en-IN", {
+      timeZone: "Asia/Kolkata",
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+  }
 
   return (
     <div className="rounded-2xl border border-slate-200 p-5">
@@ -75,7 +78,7 @@ export default function WorkflowTimeline({
 
           const event = eventMap.get(step.id);
           const timestamp = event?.timestamp
-            ? new Date(event.timestamp).toLocaleString()
+            ? formatIST(event.timestamp)
             : null;
 
           return (
@@ -125,7 +128,7 @@ export default function WorkflowTimeline({
 
                 {timestamp && (
                   <p className="mt-1 text-xs text-slate-400">
-                    {timestamp}
+                    {timestamp} IST
                   </p>
                 )}
               </div>
