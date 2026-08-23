@@ -8,6 +8,11 @@ from app.agents.diagnosis_agent import generate_batch_diagnosis
 
 router = APIRouter(prefix="/diagnosis", tags=["Diagnosis"])
 
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
+IST = ZoneInfo("Asia/Kolkata")
+
 
 @router.post("/generate")
 async def generate_batch():
@@ -71,7 +76,7 @@ async def generate_batch():
                     "$push": {
                         "timeline": {
                             "state": "diagnosis_generated",
-                            "timestamp": datetime.utcnow(),
+                            "timestamp": datetime.now(IST),
                             "details": "AI generated root cause and recovery strategy.",
                         }
                     },

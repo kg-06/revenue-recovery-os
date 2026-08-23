@@ -47,7 +47,6 @@ export default function WorkflowTimeline({
     },
   ];
 
-  // Current stage comes from the latest workflow event.
   const currentState =
     events.length > 0
       ? events[events.length - 1].state
@@ -58,10 +57,10 @@ export default function WorkflowTimeline({
     steps.findIndex((step) => step.id === currentState)
   );
 
-  const latestTimestamp =
-    events.length > 0
-      ? new Date(events[events.length - 1].timestamp).toLocaleString()
-      : "Just now";
+  // Build a lookup so every step gets its own timestamp.
+  const eventMap = new Map(
+    events.map((event) => [event.state, event])
+  );
 
   return (
     <div className="rounded-2xl border border-slate-200 p-5">
@@ -73,6 +72,11 @@ export default function WorkflowTimeline({
         {steps.map((step, index) => {
           const completed = index < currentIndex;
           const current = index === currentIndex;
+
+          const event = eventMap.get(step.id);
+          const timestamp = event?.timestamp
+            ? new Date(event.timestamp).toLocaleString()
+            : null;
 
           return (
             <div key={step.id} className="flex gap-4">
@@ -119,9 +123,9 @@ export default function WorkflowTimeline({
                   {step.description}
                 </p>
 
-                {(completed || current) && (
+                {timestamp && (
                   <p className="mt-1 text-xs text-slate-400">
-                    {latestTimestamp}
+                    {timestamp}
                   </p>
                 )}
               </div>

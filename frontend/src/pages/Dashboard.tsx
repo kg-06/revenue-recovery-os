@@ -1,10 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  AlertTriangle,
-  Wallet,
-  Users,
-  TrendingUp,
-} from "lucide-react";
+import { AlertTriangle, Wallet, Users, TrendingUp } from "lucide-react";
 
 import AppShell from "../layout/AppShell";
 import CSVUploader from "../components/CSVUploader";
@@ -14,12 +9,7 @@ import RecoveryTable from "../components/RecoveryTable";
 import { getBackendHealth } from "../services/health";
 import { getDashboardSummary } from "../services/dashboard";
 
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function Dashboard() {
   const [health, setHealth] = useState<any>(null);
@@ -31,7 +21,7 @@ export default function Dashboard() {
     recovery_rate: 0,
   });
 
-  useEffect(() => {
+  async function refreshDashboard() {
     getBackendHealth()
       .then(setHealth)
       .catch(() => setHealth({ status: "offline" }));
@@ -39,6 +29,20 @@ export default function Dashboard() {
     getDashboardSummary()
       .then(setSummary)
       .catch(() => {});
+  }
+
+  useEffect(() => {
+    refreshDashboard();
+  }, []);
+
+  useEffect(() => {
+    const handler = () => refreshDashboard();
+
+    window.addEventListener("recovery-updated", handler);
+
+    return () => {
+      window.removeEventListener("recovery-updated", handler);
+    };
   }, []);
 
   const cards = [
