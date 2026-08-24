@@ -10,6 +10,12 @@ from app.api.workflow import router as workflow_router
 from app.api.email import router as email_router
 from app.api.recovery_action import router as recovery_action_router
 from app.api.payment import router as payment_router
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
 
 app = FastAPI(
     title="Revenue Recovery OS API",
@@ -18,7 +24,9 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=["http://localhost:5173",
+                   FRONTEND_URL,
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
