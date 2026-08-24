@@ -7,7 +7,8 @@ declare global {
   }
 }
 
-const BACKEND_URL = "http://127.0.0.1:8000";
+const BACKEND_URL =
+  import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
 export default function Checkout() {
   const [status, setStatus] = useState("Preparing secure payment...");
@@ -57,28 +58,37 @@ export default function Checkout() {
           },
 
           handler: async function (response: any) {
-            setStatus("Confirming payment...");
+            try {
+              setStatus("Confirming payment...");
 
-            const confirm = await fetch(`${BACKEND_URL}/payment/verify-payment`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_signature: response.razorpay_signature,
-                record_id: recordId,
-              }),
-            });
+              const confirm = await fetch(
+                `${BACKEND_URL}/payment/verify-payment`,
+                {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    razorpay_payment_id: response.razorpay_payment_id,
+                    razorpay_order_id: response.razorpay_order_id,
+                    razorpay_signature: response.razorpay_signature,
+                    record_id: recordId,
+                  }),
+                }
+              );
 
-            const result = await confirm.json();
+              const result = await confirm.json();
 
-            if (!confirm.ok) {
-              throw new Error(result.detail || "Payment confirmation failed.");
+              if (!confirm.ok) {
+                throw new Error(
+                  result.detail || "Payment confirmation failed."
+                );
+              }
+
+              setStatus("Payment recovered successfully.");
+            } catch (err: any) {
+              setError(err.message || "Payment confirmation failed.");
             }
-
-            setStatus("Payment recovered successfully.");
           },
 
           modal: {
@@ -90,7 +100,7 @@ export default function Checkout() {
 
         razorpay.open();
       } catch (err: any) {
-        setError(err.message);
+        setError(err.message || "Unable to prepare payment.");
       }
     }
 
