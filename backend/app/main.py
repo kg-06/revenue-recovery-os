@@ -1,5 +1,6 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
+
 from app.services.database import db
 from app.api.ai import router as ai_router
 from app.api.upload import router as upload_router
@@ -10,12 +11,16 @@ from app.api.workflow import router as workflow_router
 from app.api.email import router as email_router
 from app.api.recovery_action import router as recovery_action_router
 from app.api.payment import router as payment_router
+
 import os
 from dotenv import load_dotenv
 
 load_dotenv()
 
-FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
+FRONTEND_URL = os.getenv(
+    "FRONTEND_URL",
+    "http://localhost:5173"
+)
 
 app = FastAPI(
     title="Revenue Recovery OS API",
@@ -24,13 +29,15 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173",
-                   FRONTEND_URL,
+    allow_origins=[
+        "http://localhost:5173",
+        FRONTEND_URL,
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 app.include_router(ai_router)
 app.include_router(upload_router)
 app.include_router(dashboard_router)
@@ -41,20 +48,36 @@ app.include_router(email_router)
 app.include_router(recovery_action_router)
 app.include_router(payment_router)
 
+
 @app.get("/")
 async def root():
-    return {"message": "Revenue Recovery OS API is running."}
+    return {
+        "message": "Revenue Recovery OS API is running."
+    }
+
 
 @app.get("/health")
 async def health():
     try:
         await db.command("ping")
+
         return {
             "status": "healthy",
             "database": "connected"
         }
+
     except Exception as e:
         return {
             "status": "unhealthy",
             "database": str(e)
         }
+
+
+@app.head("/health")
+async def health_head():
+    try:
+        await db.command("ping")
+        return Response(status_code=200)
+
+    except Exception:
+        return Response(status_code=503)
