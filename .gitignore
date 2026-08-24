@@ -9,6 +9,7 @@ backend/**/*.pyc
 # Environment
 .env
 backend/.env
+frontend/.env
 
 # VS Code
 .vscode/
