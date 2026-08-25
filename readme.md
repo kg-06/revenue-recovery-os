@@ -5,7 +5,13 @@
 Revenue Recovery OS is a full-stack AI revenue recovery platform built around an agent-based workflow. It takes payment data, evaluates recovery risk, uses AI to understand the likely cause of payment failure, selects an appropriate recovery strategy, contacts the customer, and tracks the recovery process through payment completion.
 
 ---
+## 🚀 Live Demo
 
+**[Open Revenue Recovery OS →](https://revenue-recovery-os-nine.vercel.app/)**
+
+**Demo Mode:** Razorpay Test Mode
+
+---
 ## 📸 Screenshots
 
 ### Dashboard
